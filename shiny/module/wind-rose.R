@@ -85,7 +85,7 @@ wind_rose_mod <- function(id, state) {
           e_wind_rose(state[["year"]], i, state[["map_onclick"]]) %>%
           e_legend(show = i == 0) %>%
           e_title(
-            show = mth != 0,
+            show = i != 0,
             month(i + (i == 0), label = TRUE),
             padding = c(15, rep(0, 3))
           )
