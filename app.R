@@ -13,11 +13,8 @@ library(lubridate)
 library(colorspace)
 library(janitor)
 
-invisible(map(paste0("shiny/module/", list.files("shiny/module/")), source))
-source("shiny/function.R")
-source("shiny/data.R")
-source("shiny/ini.R")
-source("shiny/ui.R")
-source("shiny/server.R")
+invisible(map(
+  list.files("shiny", pattern = ".R", recursive = TRUE, full.names = TRUE), source
+))
 
 shinyApp(app_ui, app_server)
