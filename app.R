@@ -13,8 +13,10 @@ library(lubridate)
 library(colorspace)
 library(janitor)
 
+## Load shiny modules
 invisible(map(
-  list.files("shiny", pattern = ".R", recursive = TRUE, full.names = TRUE), source
+  list.files("shiny", pattern = ".R", recursive = TRUE, full.names = TRUE),
+  source
 ))
 
 shinyApp(app_ui, app_server)
