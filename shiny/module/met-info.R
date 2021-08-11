@@ -16,60 +16,69 @@ met_info_mod <- function(id, state) {
           date = as_date(datetime),
           hour = sprintf("%02d:00", hour(datetime))
         ) %>%
-        select(date, hour, temp, rh, wind_dir, ws, aqi, location) %>%
+        select(date, hour, temp, rh, ws, aqi, location) %>%
         filter(location == loc) %>%
         select(-location)
 
       req(state[["yrmth"]] %in% data[["date"]])
 
-      bar_chart <- function(label, width, fill, height = "16px") {
-        if (is.na(label)) {
-          return(NULL)
-        }
-        width <- paste0(width * 100, "%")
-
-        div(
-          style = list(display = "flex", alignItems = "center"),
-          label,
-          div(
-            style = list(flexGrow = 1, marginLeft = "8px", background = NULL),
-            div(style = list(background = fill, width = width, height = height))
-          )
-        )
-      }
-
-      bc <- qualitative_hcl(4)
-
       data %>%
         filter(yearmonth(date) == yearmonth(state[["yrmth"]])) %>%
-        mutate(date = stamp("March 1")(date)) %>%
+        pivot_longer(-(1:2)) %>%
+        arrange(date, name, hour) %>%
+        group_by(date, name) %>%
+        summarise(value = list(value)) %>%
+        mutate(
+          date = fmt_date(date),
+          name = factor(name, c("temp", "rh", "ws", "aqi"))
+        ) %>%
+        arrange(date, name) %>%
+        mutate(
+          value = case_when(
+            name == "aqi" ~ map(value, function(x) c("aqi", x)),
+            TRUE ~ value
+          ),
+          name = case_when(
+            name == "temp" ~ "Temperature (\u00B0C)",
+            name == "rh" ~ "Relative Humidity (%)",
+            name == "ws" ~ "Wind Speed (m/s)",
+            name == "aqi" ~ "AQI"
+          )
+        ) %>%
         reactable(
           columns = list(
             date = colDef(name = "Date", grouped = JS("
               function(cellInfo) {
                 return cellInfo.value;
               }
-            ")),
-            hour = colDef(name = "Time", width = 55),
-            temp = colDef(
-              name = "Temperature", align = "left", cell = function(value) {
-                bar_chart(value, value / max(data[["temp"]], na.rm = TRUE), bc[1])
+            "), width = 200),
+            name = colDef(name = "", width = 200),
+            value = colDef(name = "", cell = function(values) {
+              if (is.na(values[1])) {
+                is_aqi <- FALSE
+              } else if (values[1] == "aqi") {
+                is_aqi <- TRUE
+                values <- as.numeric(values[-1])
+              } else {
+                is_aqi <- FALSE
               }
-            ),
-            rh = colDef(
-              name = "Relative Humidity", align = "left", cell = function(value) {
-                bar_chart(value, value / max(data[["rh"]], na.rm = TRUE), bc[2])
-              }
-            ),
-            ws = colDef(
-              name = "Wind Speed", align = "left", cell = function(value) {
-                bar_chart(value, value / max(data[["ws"]], na.rm = TRUE), bc[3])
-              }
-            )
+              sparkline(values,
+                width = 696,
+                barWidth = 29,
+                colorMap = case_when(
+                  is_aqi ~ unname(aqi_pal[aqi_cat(values)]),
+                  TRUE ~ "steelblue"
+                ),
+                height = 50,
+                type = "bar",
+                chartRangeMin = 0
+              )
+            }, align = "center")
           ),
           groupBy = "date",
           defaultExpanded = TRUE,
-          pagination = FALSE
+          pagination = FALSE,
+          sortable = FALSE
         )
     }) %>%
       bindCache(state[["map_onclick"]], state[["yrmth"]])

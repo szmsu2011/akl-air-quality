@@ -7,6 +7,7 @@ library(shinyWidgets)
 library(rlang)
 library(echarts4r)
 library(reactable)
+library(sparkline)
 library(leaflet)
 library(tsibble)
 library(lubridate)
@@ -15,7 +16,10 @@ library(janitor)
 
 ## Load shiny modules
 invisible(map(
-  list.files("shiny", pattern = ".R", recursive = TRUE, full.names = TRUE),
+  list.files("shiny",
+    pattern = ".R",
+    recursive = TRUE, full.names = TRUE
+  ),
   source
 ))
 
