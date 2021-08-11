@@ -22,6 +22,25 @@ met_info_mod <- function(id, state) {
 
       req(state[["yrmth"]] %in% data[["date"]])
 
+      bar_pal <- function(x, v) {
+        x[is.na(x)] <- 0
+
+        if (v == "aqi") {
+          return(unname(aqi_pal[aqi_cat(x)]))
+        }
+
+        lim <- case_when(
+          v == "temp" ~ c(0, 30),
+          v == "rh" ~ c(130, 0),
+          TRUE ~ c(-5, 20)
+        )
+        pal <- rev(head(rainbow(120), 100))
+
+        map_chr(x, function(x) {
+          pal[which.min(abs(seq(lim[1], lim[2], length = 100) - x))]
+        })
+      }
+
       data %>%
         filter(yearmonth(date) == yearmonth(state[["yrmth"]])) %>%
         pivot_longer(-(1:2)) %>%
@@ -34,15 +53,12 @@ met_info_mod <- function(id, state) {
         ) %>%
         arrange(date, name) %>%
         mutate(
-          value = case_when(
-            name == "aqi" ~ map(value, function(x) c("aqi", x)),
-            TRUE ~ value
-          ),
+          value = map2(value, name, function(x, y) c(as.character(y), x)),
           name = case_when(
             name == "temp" ~ "Temperature (\u00B0C)",
             name == "rh" ~ "Relative Humidity (%)",
             name == "ws" ~ "Wind Speed (m/s)",
-            name == "aqi" ~ "AQI"
+            TRUE ~ "AQI"
           )
         ) %>%
         reactable(
@@ -54,21 +70,12 @@ met_info_mod <- function(id, state) {
             "), width = 200),
             name = colDef(name = "", width = 200),
             value = colDef(name = "", cell = function(values) {
-              if (is.na(values[1])) {
-                is_aqi <- FALSE
-              } else if (values[1] == "aqi") {
-                is_aqi <- TRUE
-                values <- as.numeric(values[-1])
-              } else {
-                is_aqi <- FALSE
-              }
+              var_name <- values[1]
+              values <- as.numeric(values[-1])
               sparkline(values,
                 width = 696,
                 barWidth = 29,
-                colorMap = case_when(
-                  is_aqi ~ unname(aqi_pal[aqi_cat(values)]),
-                  TRUE ~ "steelblue"
-                ),
+                colorMap = bar_pal(values, var_name),
                 height = 50,
                 type = "bar",
                 chartRangeMin = 0
