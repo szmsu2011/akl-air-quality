@@ -13,8 +13,8 @@ library(tsibble)
 library(lubridate)
 library(colorspace)
 library(janitor)
+library(tseries)
 
-## Load shiny modules
 invisible(map(
   list.files("shiny",
     pattern = ".R",
