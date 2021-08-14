@@ -5,4 +5,7 @@ cache*/
 *.run.xml
 *.bbl
 _bookdown_files
-.RData
+.*
+renv/library
+renv/staging
+renv/local
