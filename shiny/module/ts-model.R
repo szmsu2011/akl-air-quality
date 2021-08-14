@@ -74,7 +74,7 @@ ts_model_mod <- function(id, state) {
             coef(trend_fit)[2] * 365
           )), 2)) %>%
           paste0(ifelse(state[["ts_geomean"]], "%", "")) %>%
-          paste("per year") %>%
+          paste("per annum") %>%
           paste(ifelse(diff(state[["ts_yr"]]) == 0, "in", "from")) %>%
           paste(ifelse(
             diff(state[["ts_yr"]]) == 0,
