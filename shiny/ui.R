@@ -3,7 +3,8 @@ app_ui <- dashboardPage(
   dashboardSidebar(sidebarMenu(
     menuItem("Air Quality", tabName = "aqi", icon = icon("dashboard")),
     menuItem("Wind", tabName = "wind", icon = icon("wind")),
-    menuItem("Weather", tabName = "weather", icon = icon("cloud-sun"))
+    menuItem("Weather", tabName = "weather", icon = icon("cloud-sun")),
+    menuItem("Time Series", tabName = "tseries", icon = icon("chart-line"))
   )),
   dashboardBody(
     shinyDashboardThemes(theme = "blue_gradient"),
@@ -37,13 +38,48 @@ app_ui <- dashboardPage(
         fluidRow(
           column(width = 4),
           column(selectInput("met_loc", "Site", station[["site"]]), width = 4),
-          column(airMonthpickerInput(
-            "yrmth", "Select Month",
-            value = ymd(20201201),
-            minDate = ymd(20160101), maxDate = ymd(20211201)
-          ), width = 4)
+          column(airMonthpickerInput("yrmth", "Select Month"), width = 4)
         ),
-        fluidRow(met_info_ui("met_info"))
+        fluidRow(
+          met_info_ui("met_info")
+        )
+      )),
+      tabItem("tseries", fluidPage(
+        fluidRow(
+          column(selectInput("ts_loc", "Site", station[["site"]]), width = 3),
+          column(airYearpickerInput("ts_yr", "Years", range = TRUE), width = 3),
+          column(selectInput("ts_var", "Parameter", ""), width = 3),
+          column(selectInput(
+            "ts_mu", "Mean Structure",
+            c("Arithmetic", "Geometric"),
+            selected = "Arithmetic"
+          ), width = 3)
+        ),
+        fluidRow(
+          column(selectInput(
+            "ts_trend", "Trend Model",
+            c("Null", "Linear"),
+            selected = "Linear"
+          ), width = 3),
+          column(selectInput(
+            "ts_autocor", "Autocorrelation Model",
+            c("Null", "AR(1)"),
+            selected = "Null"
+          ), width = 3),
+          column(selectInput(
+            "ts_vov", "Heteroscedasticity Model",
+            c("Null", "GARCH(1,1)"),
+            selected = "Null"
+          ), width = 3),
+          column(selectInput(
+            "ts_int", "Interval Type",
+            c("Confidence", "Prediction"),
+            selected = "Confidence"
+          ), width = 3)
+        ),
+        fluidRow(
+          ts_model_ui("ts_model")
+        )
       ))
     )
   )
