@@ -38,7 +38,7 @@ ts_model_mod <- function(id, state) {
         trend <- paste(gsub("t", "t[-1]", trend), "+ head(y_t, -1)")
       }
       trend_fit <- lm(as.formula(trend), data, na.action = na.exclude)
-      pred <- predict(trend_fit, as.list(data), interval = ts_int)
+      pred <- predict(trend_fit, interval = ts_int)
       if (state[["ts_autocor"]] == "AR(1)") pred <- rbind(NA, pred)
       model <- list(
         fitted = pred[, 1],
@@ -62,25 +62,28 @@ ts_model_mod <- function(id, state) {
         case_when(to_be_exp ~ exp(x), TRUE ~ x)
       }
 
-      label <- "Average" %>%
-        paste(state[["ts_var"]]) %>%
-        paste("in", state[["map_onclick"]]) %>%
-        paste(ifelse(coef(trend_fit)[2] >= 0, "up", "down"), "by") %>%
-        paste(round(abs(ifelse(
-          state[["ts_geomean"]],
-          (exp(coef(trend_fit)[2] * 365) - 1) * 100,
-          coef(trend_fit)[2] * 365
-        )), 2)) %>%
-        paste0(ifelse(state[["ts_geomean"]], "%", "")) %>%
-        paste("per year") %>%
-        paste(ifelse(diff(state[["ts_yr"]]) == 0, "in", "from")) %>%
-        paste(ifelse(
-          diff(state[["ts_yr"]]) == 0,
-          state[["ts_yr"]][1],
-          paste(state[["ts_yr"]], collapse = " to ")
-        ))
+      label <- ifelse(
+        state[["ts_trend"]] == "Linear",
+        "Average" %>%
+          paste(state[["ts_var"]]) %>%
+          paste("in", state[["map_onclick"]]) %>%
+          paste(ifelse(coef(trend_fit)[2] >= 0, "up", "down"), "by") %>%
+          paste(round(abs(ifelse(
+            state[["ts_geomean"]],
+            (exp(coef(trend_fit)[2] * 365) - 1) * 100,
+            coef(trend_fit)[2] * 365
+          )), 2)) %>%
+          paste0(ifelse(state[["ts_geomean"]], "%", "")) %>%
+          paste("per year") %>%
+          paste(ifelse(diff(state[["ts_yr"]]) == 0, "in", "from")) %>%
+          paste(ifelse(
+            diff(state[["ts_yr"]]) == 0,
+            state[["ts_yr"]][1],
+            paste(state[["ts_yr"]], collapse = " to ")
+          )), ""
+      )
 
-      pval <- summary(trend_fit)[["coefficients"]][2, 4]
+      pval <- rbind(summary(trend_fit)[["coefficients"]], NA)[2, 4]
 
       p_trend <- ifelse(
         state[["ts_trend"]] == "Linear",
