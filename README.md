@@ -9,3 +9,5 @@ The web application attempts to approach the visualisation of air quality data i
 The data behind the application was from the Air Quality Research and Evaluation Unit of the [Auckland Council](https://www.aucklandcouncil.govt.nz).
 
 For the raw data, see [szmsu2011/hons-dissertation](https://github.com/szmsu2011/hons-dissertation).
+
+**Note:** The application interface may not work well above 100% zoom.
