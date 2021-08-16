@@ -1,11 +1,8 @@
-.Rproj.user
-.DS_Store
 cache*/
 *.log
-*.run.xml
-*.bbl
-_bookdown_files
+rsconnect/
 .*
 renv/library
 renv/staging
 renv/local
+.Rproj.user

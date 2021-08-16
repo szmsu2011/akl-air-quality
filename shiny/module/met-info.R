@@ -47,12 +47,10 @@ met_info_mod <- function(id, state) {
         arrange(date, name, hour) %>%
         group_by(date, name) %>%
         summarise(value = list(value)) %>%
-        mutate(
-          date = fmt_date(date),
-          name = factor(name, c("temp", "rh", "ws", "aqi"))
-        ) %>%
+        mutate(name = factor(name, c("temp", "rh", "ws", "aqi"))) %>%
         arrange(date, name) %>%
         mutate(
+          date = fmt_date(date),
           value = map2(value, name, function(x, y) c(as.character(y), x)),
           name = case_when(
             name == "temp" ~ "Temperature (\u00B0C)",
@@ -72,7 +70,8 @@ met_info_mod <- function(id, state) {
             value = colDef(name = "", cell = function(values) {
               var_name <- values[1]
               values <- as.numeric(values[-1])
-              sparkline(values,
+              sparkline(
+                values,
                 width = 696,
                 barWidth = 29,
                 colorMap = bar_pal(values, var_name),

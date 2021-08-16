@@ -3,7 +3,11 @@ Max <- function(x) {
   ifelse(x > -Inf, round(x), NA)
 }
 
-fmt_date <- stamp("March 1, 1999")
+fmt_date <- function(x) {
+  month(x, label = TRUE) %>%
+    paste(day(x)) %>%
+    paste(year(x), sep = ", ")
+}
 
 aqi_cat <- function(x) {
   cut(x,
