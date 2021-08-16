@@ -6,6 +6,6 @@ The web application attempts to approach the visualisation of air quality data i
 
 ## Data Source
 
-The data provided for the application was from the Air Quality Research and Evaluation Unit of the [Auckland Council](https://www.aucklandcouncil.govt.nz).
+The data behind the application was from the Air Quality Research and Evaluation Unit of the [Auckland Council](https://www.aucklandcouncil.govt.nz).
 
 For the raw data, see [szmsu2011/hons-dissertation](https://github.com/szmsu2011/hons-dissertation).
