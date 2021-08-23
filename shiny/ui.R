@@ -7,6 +7,7 @@ app_ui <- dashboardPage(
     menuItem("Time Series", tabName = "tseries", icon = icon("chart-line"))
   )),
   dashboardBody(
+    useShinyjs(),
     shinyDashboardThemes(theme = "blue_gradient"),
     tabItems(
       tabItem("aqi", fluidPage(
@@ -40,9 +41,7 @@ app_ui <- dashboardPage(
           column(selectInput("met_loc", "Site", station[["site"]]), width = 4),
           column(airMonthpickerInput("yrmth", "Select Month"), width = 4)
         ),
-        fluidRow(
-          met_info_ui("met_info")
-        )
+        fluidRow(met_info_ui("met_info"))
       )),
       tabItem("tseries", fluidPage(
         fluidRow(
@@ -72,14 +71,12 @@ app_ui <- dashboardPage(
             selected = "Null"
           ), width = 3),
           column(selectInput(
-            "ts_int", "Interval Type",
-            c("Confidence", "Prediction"),
+            "ts_int", "Interval",
+            c("Null", "Confidence", "Prediction"),
             selected = "Confidence"
           ), width = 3)
         ),
-        fluidRow(
-          ts_model_ui("ts_model")
-        )
+        fluidRow(ts_model_ui("ts_model"))
       ))
     )
   )

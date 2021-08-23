@@ -4,6 +4,7 @@ library(dashboardthemes)
 library(tidyverse)
 library(htmlwidgets)
 library(shinyWidgets)
+library(shinyjs)
 library(rlang)
 library(echarts4r)
 library(reactable)
@@ -23,7 +24,6 @@ invisible(map(
   source
 ))
 
-## Fixing locale to EN
 Sys.setlocale(locale = "C")
 
 shinyApp(app_ui, app_server)

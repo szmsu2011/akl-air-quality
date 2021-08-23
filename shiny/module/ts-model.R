@@ -13,6 +13,7 @@ ts_model_mod <- function(id, state) {
       loc <- make_clean_names(state[["map_onclick"]])
       req(loc %in% state[["data"]][["location"]])
       req(ts_var %in% names(state[["data"]]))
+      req(!all(state[["ts_vov"]] != "Null", ts_int == "null"))
 
       data <- state[["data"]] %>%
         filter(with(state, between(year(datetime), ts_yr[1], ts_yr[2]))) %>%
@@ -38,7 +39,9 @@ ts_model_mod <- function(id, state) {
         trend <- paste(gsub("t", "t[-1]", trend), "+ head(y_t, -1)")
       }
       trend_fit <- lm(as.formula(trend), data, na.action = na.exclude)
-      pred <- predict(trend_fit, interval = ts_int)
+      pred <- predict(trend_fit,
+        interval = ifelse(ts_int == "null", "confidence", ts_int)
+      )
       if (state[["ts_autocor"]] == "AR(1)") pred <- rbind(NA, pred)
       model <- list(
         fitted = pred[, 1],
@@ -103,7 +106,7 @@ ts_model_mod <- function(id, state) {
         e_charts(t) %>%
         e_line(y_t, symbol = "none", name = "Observed Values") %>%
         e_band(y_lwr, y_upr, areaStyle = list(
-          list(opacity = 0), list(color = "black", opacity = .4)
+          list(opacity = 0), list(color = "black", opacity = .4 * (ts_int != "null"))
         )) %>%
         e_line(y_hat, symbol = "none", name = "Fitted Values", lineStyle = list(
           width = 1, opacity = .8

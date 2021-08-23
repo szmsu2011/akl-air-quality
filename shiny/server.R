@@ -62,6 +62,12 @@ app_server <- function(input, output, session) {
 
   observeEvent(input[["ts_int"]], {
     app_state[["ts_int"]] <- input[["ts_int"]]
+    if (app_state[["ts_int"]] == "Null") {
+      updateSelectInput(session, "ts_vov", selected = "Null")
+      disable("ts_vov")
+    } else {
+      enable("ts_vov")
+    }
   })
 
   observeEvent(app_state[["map_onclick"]], {
