@@ -42,15 +42,29 @@ met_info_mod <- function(id, state) {
       }
 
       data %>%
-        filter(yearmonth(date) == yearmonth(state[["yrmth"]])) %>%
+        filter(
+          date >= floor_date(state[["yrmth"]], "week"),
+          date < ceiling_date(state[["yrmth"]], "month")
+        ) %>%
         pivot_longer(-(1:2)) %>%
         arrange(date, name, hour) %>%
         group_by(date, name) %>%
-        summarise(value = list(value)) %>%
-        mutate(name = factor(name, c("temp", "rh", "ws", "aqi"))) %>%
-        arrange(date, name) %>%
+        summarise(value = list(c(value, NA))) %>%
         mutate(
-          date = fmt_date(date),
+          name = factor(name, c("temp", "rh", "ws", "aqi")),
+          value = case_when(
+            yearmonth(date) == yearmonth(state[["yrmth"]]) ~ value,
+            TRUE ~ list(rep(NA, 25))
+          )
+        ) %>%
+        arrange(date, name) %>%
+        group_by(week_start = floor_date(date, "week"), name) %>%
+        summarise(value = list({
+          val <- do.call("c", value)
+          c(val, rep(NA, 175 - length(val)))
+        })) %>%
+        mutate(
+          week_start = fmt_date(week_start),
           value = map2(value, name, function(x, y) c(as.character(y), x)),
           name = case_when(
             name == "temp" ~ "Temperature (\u00B0C)",
@@ -61,19 +75,19 @@ met_info_mod <- function(id, state) {
         ) %>%
         reactable(
           columns = list(
-            date = colDef(name = "Date", grouped = JS("
+            week_start = colDef(name = "Week Beginning", grouped = JS("
               function(cellInfo) {
                 return cellInfo.value;
               }
-            "), width = 200),
-            name = colDef(name = "", width = 200),
+            "), width = 140),
+            name = colDef(name = "", width = 180),
             value = colDef(name = "", cell = function(values) {
               var_name <- values[1]
               values <- as.numeric(values[-1])
               sparkline(
                 values,
-                width = 696,
-                barWidth = 29,
+                width = 912,
+                barWidth = 38,
                 colorMap = bar_pal(values, var_name),
                 height = 50,
                 type = "bar",
@@ -81,7 +95,7 @@ met_info_mod <- function(id, state) {
               )
             }, align = "center")
           ),
-          groupBy = "date",
+          groupBy = "week_start",
           defaultExpanded = TRUE,
           pagination = FALSE,
           sortable = FALSE
