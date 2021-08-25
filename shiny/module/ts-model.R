@@ -187,7 +187,7 @@ ts_model_mod <- function(id, state) {
           data = list(
             yAxis = qt(.975, length(r) - 1) / sqrt(length(r)),
             lineStyle = list(color = "red"),
-            label = list(formatter = "95% Sig.")
+            label = list(formatter = "5% Sig.")
           ),
           name = "mark 1",
           symbol = "none"
@@ -196,7 +196,7 @@ ts_model_mod <- function(id, state) {
           data = list(
             yAxis = -qt(.975, length(r) - 1) / sqrt(length(r)),
             lineStyle = list(color = "red"),
-            label = list(formatter = "95% Sig.")
+            label = list(formatter = "5% Sig.")
           ),
           name = "mark 2",
           symbol = "none"
