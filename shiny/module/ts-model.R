@@ -1,7 +1,17 @@
 ts_model_ui <- function(id) {
   ns <- NS(id)
 
-  tagList(echarts4rOutput(ns("ts_model"), height = "650px"))
+  fluidPage(
+    fluidRow(tagList(echarts4rOutput(ns("ts_model"), height = "650px"))),
+    fluidRow(
+      column(tagList(echarts4rOutput(ns("acf_Residual Series"))), width = 6),
+      column(tagList(echarts4rOutput(ns("pacf_Residual Series"))), width = 6)
+    ),
+    fluidRow(
+      column(tagList(echarts4rOutput(ns("acf_Observed Series"))), width = 6),
+      column(tagList(echarts4rOutput(ns("pacf_Observed Series"))), width = 6)
+    )
+  )
 }
 
 ts_model_mod <- function(id, state) {
@@ -16,7 +26,10 @@ ts_model_mod <- function(id, state) {
       req(!all(state[["ts_vov"]] != "Null", ts_int == "null"))
 
       data <- state[["data"]] %>%
-        filter(with(state, between(year(datetime), ts_yr[1], ts_yr[2]))) %>%
+        filter(
+          with(state, between(year(datetime), ts_yr[1], ts_yr[2])),
+          location == loc
+        ) %>%
         mutate(t = as_date(datetime), y_t = !!sym(ts_var)) %>%
         as_tibble() %>%
         group_by(t) %>%
@@ -104,11 +117,11 @@ ts_model_mod <- function(id, state) {
           t = as_date(t)
         ) %>%
         e_charts(t) %>%
-        e_line(y_t, symbol = "none", name = "Observed Values") %>%
+        e_line(y_t, symbol = "none", name = "Observed Series") %>%
         e_band(y_lwr, y_upr, areaStyle = list(
           list(opacity = 0), list(color = "black", opacity = .4 * (ts_int != "null"))
         )) %>%
-        e_line(y_hat, symbol = "none", name = "Fitted Values", lineStyle = list(
+        e_line(y_hat, symbol = "none", name = "Fitted Series", lineStyle = list(
           width = 1, opacity = .8
         )) %>%
         e_title(label, p_trend) %>%
@@ -119,6 +132,101 @@ ts_model_mod <- function(id, state) {
         state[["ts_geomean"]], state[["ts_trend"]], state[["ts_autocor"]],
         state[["ts_vov"]], state[["map_onclick"]]
       )
+
+    e_acf <- function(data, f, ser, loc, ts_yr, ts_var,
+                      ts_geomean, ts_trend, ts_autocor) {
+      loc <- make_clean_names(state[["map_onclick"]])
+      ts_var <- gsub("_", "\\.", make_clean_names(ts_var))
+      req(loc %in% data[["location"]])
+      req(ts_var %in% names(data))
+
+      data <- data %>%
+        filter(
+          between(year(datetime), ts_yr[1], ts_yr[2]),
+          location == loc
+        ) %>%
+        mutate(t = as_date(datetime), y_t = !!sym(ts_var)) %>%
+        as_tibble() %>%
+        group_by(t) %>%
+        summarise(y_t = mean(y_t, na.rm = TRUE)) %>%
+        mutate(
+          t = as.numeric(t),
+          y_t = case_when(y_t <= 0 ~ NA_real_, TRUE ~ case_when(
+            ts_geomean ~ log(y_t), TRUE ~ y_t
+          ))
+        )
+
+      req(mean(is.na(data[["y_t"]])) < .2)
+
+      if (ser == "Residual Series") {
+        if (ts_trend == "Null") {
+          trend <- "y_t ~ 1"
+        } else {
+          trend <- "y_t ~ t"
+        }
+        if (ts_autocor == "AR(1)") {
+          trend <- paste(gsub("t", "t[-1]", trend), "+ head(y_t, -1)")
+        }
+        trend_fit <- lm(as.formula(trend), data, na.action = na.exclude)
+        r <- residuals(trend_fit) %>% replace_na(0)
+      } else {
+        r <- with(data, replace_na(y_t, mean(y_t, na.rm = TRUE)))
+      }
+
+      method <- eval(sym(f))
+
+      acf_data <- tibble(
+        t = na.omit(c(ifelse(f == "acf", 0, NA), seq_len(min(30, length(r) - 1)))),
+        lag_t = method(r, 30, plot = FALSE)[["acf"]][, 1, 1]
+      )
+
+      acf_data %>%
+        e_charts(t) %>%
+        e_bar(lag_t, barWidth = 2) %>%
+        e_mark_line(
+          data = list(
+            yAxis = qt(.975, length(r) - 1) / sqrt(length(r)),
+            lineStyle = list(color = "red"),
+            label = list(formatter = "95% Sig.")
+          ),
+          name = "mark 1",
+          symbol = "none"
+        ) %>%
+        e_mark_line(
+          data = list(
+            yAxis = -qt(.975, length(r) - 1) / sqrt(length(r)),
+            lineStyle = list(color = "red"),
+            label = list(formatter = "95% Sig.")
+          ),
+          name = "mark 2",
+          symbol = "none"
+        ) %>%
+        e_title(paste(toupper(f), ser, sep = ", ")) %>%
+        e_x_axis(nameLocation = "middle") %>%
+        e_axis_labels(x = "Lag") %>%
+        e_legend(show = FALSE)
+    }
+
+    map(
+      list(
+        c("acf", "Observed Series"), c("pacf", "Observed Series"),
+        c("acf", "Residual Series"), c("pacf", "Residual Series")
+      ),
+      function(type) {
+        output[[paste(type, collapse = "_")]] <- renderEcharts4r({
+          e_acf(
+            state[["data"]], type[1], type[2], state[["map_onclick"]],
+            state[["ts_yr"]], state[["ts_var"]], state[["ts_geomean"]],
+            state[["ts_trend"]], state[["ts_autocor"]]
+          )
+        }) %>%
+          bindCache(
+            type[1], type[2], state[["map_onclick"]],
+            state[["ts_yr"]], state[["ts_var"]], state[["ts_geomean"]],
+            state[["ts_trend"]], state[["ts_autocor"]]
+          )
+      }
+    )
   }
 
   moduleServer(id, module)
