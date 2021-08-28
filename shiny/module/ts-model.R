@@ -2,7 +2,7 @@ ts_model_ui <- function(id) {
   ns <- NS(id)
 
   fluidPage(
-    fluidRow(tagList(echarts4rOutput(ns("ts_model"), height = "650px"))),
+    fluidRow(tagList(echarts4rOutput(ns("ts_model"), height = "400px"))),
     fluidRow(
       column(tagList(echarts4rOutput(ns("acf_Residual Series"))), width = 6),
       column(tagList(echarts4rOutput(ns("pacf_Residual Series"))), width = 6)
@@ -36,9 +36,11 @@ ts_model_mod <- function(id, state) {
         summarise(y_t = mean(y_t, na.rm = TRUE)) %>%
         mutate(
           t = as.numeric(t),
-          y_t = case_when(y_t <= 0 ~ NA_real_, TRUE ~ case_when(
-            state[["ts_geomean"]] ~ log(y_t), TRUE ~ y_t
-          ))
+          y_t = case_when(
+            y_t <= 0 ~ NA_real_, ## To-be removed
+            state[["ts_geomean"]] ~ log(y_t),
+            TRUE ~ y_t
+          )
         )
 
       req(mean(is.na(data[["y_t"]])) < .2)
@@ -133,7 +135,7 @@ ts_model_mod <- function(id, state) {
         state[["ts_vov"]], state[["map_onclick"]]
       )
 
-    e_acf <- function(data, f, ser, loc, ts_yr, ts_var,
+    e_acf <- function(data, method, ser, loc, ts_yr, ts_var,
                       ts_geomean, ts_trend, ts_autocor) {
       loc <- make_clean_names(state[["map_onclick"]])
       ts_var <- gsub("_", "\\.", make_clean_names(ts_var))
@@ -173,11 +175,11 @@ ts_model_mod <- function(id, state) {
         r <- with(data, replace_na(y_t, mean(y_t, na.rm = TRUE)))
       }
 
-      method <- eval(sym(f))
+      f <- eval(sym(method))
 
       acf_data <- tibble(
-        t = na.omit(c(ifelse(f == "acf", 0, NA), seq_len(min(30, length(r) - 1)))),
-        lag_t = method(r, 30, plot = FALSE)[["acf"]][, 1, 1]
+        t = 0:min(28, length(r) - 1),
+        lag_t = c(0, tail(f(r, 28, plot = FALSE)[["acf"]][, 1, 1], length(t) - 1))
       )
 
       acf_data %>%
@@ -201,9 +203,14 @@ ts_model_mod <- function(id, state) {
           name = "mark 2",
           symbol = "none"
         ) %>%
-        e_title(paste(toupper(f), ser, sep = ", ")) %>%
-        e_x_axis(nameLocation = "middle") %>%
-        e_axis_labels(x = "Lag") %>%
+        e_title(paste(toupper(method), ser, sep = ", ")) %>%
+        e_x_axis(
+          type = "category",
+          nameLocation = "middle",
+          axisLabel = list(interval = 6),
+          axisTick = list(alignWithLabel = TRUE),
+          name = "Lag"
+        ) %>%
         e_legend(show = FALSE)
     }
 
