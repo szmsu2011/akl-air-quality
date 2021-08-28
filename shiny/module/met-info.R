@@ -43,7 +43,7 @@ met_info_mod <- function(id, state) {
 
       data %>%
         filter(
-          date >= floor_date(state[["yrmth"]], "week"),
+          date >= floor_date(state[["yrmth"]], "week", 1),
           date < ceiling_date(state[["yrmth"]], "month")
         ) %>%
         pivot_longer(-(1:2)) %>%
@@ -58,7 +58,7 @@ met_info_mod <- function(id, state) {
           )
         ) %>%
         arrange(date, name) %>%
-        group_by(week_start = floor_date(date, "week"), name) %>%
+        group_by(week_start = floor_date(date, "week", 1), name) %>%
         summarise(value = list({
           val <- do.call("c", value)
           c(val, rep(NA, 175 - length(val)))
@@ -81,19 +81,24 @@ met_info_mod <- function(id, state) {
               }
             "), width = 140),
             name = colDef(name = "", width = 180),
-            value = colDef(name = "", cell = function(values) {
-              var_name <- values[1]
-              values <- as.numeric(values[-1])
-              sparkline(
-                values,
-                width = 912,
-                barWidth = 38,
-                colorMap = bar_pal(values, var_name),
-                height = 50,
-                type = "bar",
-                chartRangeMin = 0
-              )
-            }, align = "center")
+            value = colDef(
+              name = wday(1:7 + 1, label = TRUE, week_start = 1) %>%
+                paste(collapse = paste(rep(" ", 14), collapse = " ")),
+              cell = function(values) {
+                var_name <- values[1]
+                values <- as.numeric(values[-1])
+                sparkline(
+                  values,
+                  width = 912,
+                  barWidth = 38,
+                  colorMap = bar_pal(values, var_name),
+                  height = 50,
+                  type = "bar",
+                  chartRangeMin = 0
+                )
+              }, align = "center",
+              headerStyle = list(whiteSpace = "pre")
+            )
           ),
           groupBy = "week_start",
           defaultExpanded = TRUE,
