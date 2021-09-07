@@ -2,7 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(tsibble)
 
-source("shiny/app/function.R")
+source("../akl-air-quality/shiny/function.R")
 
 wind_dir_data <- "data/akl-wind-dir.csv" %>%
   read_csv(col_types = "Tcd") %>%
