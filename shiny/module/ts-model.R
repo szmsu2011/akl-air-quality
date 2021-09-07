@@ -134,12 +134,7 @@ ts_model_mod <- function(id, state) {
         )) %>%
         e_title(label, p_trend) %>%
         e_legend(top = "10%")
-    }) %>%
-      bindCache(
-        state[["ts_int"]], state[["ts_yr"]], state[["ts_var"]],
-        state[["ts_geomean"]], state[["ts_trend"]], state[["ts_autocor"]],
-        state[["ts_vov"]], state[["map_onclick"]]
-      )
+    })
 
     e_acf <- function(data, method, ser, loc, ts_yr, ts_var,
                       ts_geomean, ts_trend, ts_autocor) {
@@ -237,12 +232,7 @@ ts_model_mod <- function(id, state) {
             state[["ts_yr"]], state[["ts_var"]], state[["ts_geomean"]],
             state[["ts_trend"]], state[["ts_autocor"]]
           )
-        }) %>%
-          bindCache(
-            type[1], type[2], state[["map_onclick"]],
-            state[["ts_yr"]], state[["ts_var"]], state[["ts_geomean"]],
-            state[["ts_trend"]], state[["ts_autocor"]]
-          )
+        })
       }
     )
   }
