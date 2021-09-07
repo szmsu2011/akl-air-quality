@@ -62,7 +62,7 @@ app_ui <- dashboardPage(
           ), width = 3),
           column(selectInput(
             "ts_autocor", "Autocorrelation Model",
-            c("Null", "AR(1)"),
+            c("Null", paste0("AR(", seq_len(3), ")")),
             selected = "Null"
           ), width = 3),
           column(selectInput(

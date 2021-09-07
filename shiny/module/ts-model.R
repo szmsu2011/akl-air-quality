@@ -49,20 +49,28 @@ ts_model_mod <- function(id, state) {
       } else {
         trend <- "y_t ~ t"
       }
-      if (state[["ts_autocor"]] == "AR(1)") {
-        trend <- paste(gsub("t", "t[-1]", trend), "+ head(y_t, -1)")
+      if (substr(state[["ts_autocor"]], 1, 2) == "AR") {
+        ar_ord <- as.numeric(gsub("\\D", "", state[["ts_autocor"]]))
+        lags <- paste0("tail(lag(y_t, ", seq_len(3), "), -", ar_ord, ")")
+        trend <- paste(
+          gsub("t", paste0("t[-seq_len(", ar_ord, ")]"), trend),
+          "+", paste(lags[seq_len(ar_ord)], collapse = " + ")
+        )
+      } else {
+        ar_ord <- 0
       }
       trend_fit <- lm(as.formula(trend), data, na.action = na.exclude)
       pred <- predict(trend_fit,
         interval = ifelse(ts_int == "null", "confidence", ts_int)
       )
-      if (state[["ts_autocor"]] == "AR(1)") pred <- rbind(NA, pred)
+      if (substr(state[["ts_autocor"]], 1, 2) == "AR") {
+        pred <- rbind(matrix(NA, ar_ord, 3), pred)
+      }
       model <- list(
         fitted = pred[, 1],
         seof = (pred[, 1] - pred[, 2]) / qt(.975, df.residual(trend_fit)),
-        r = residuals(trend_fit)
+        r = c(rep(NA, ar_ord), residuals(trend_fit))
       )
-      if (state[["ts_autocor"]] == "AR(1)") model[["r"]] <- c(NA, model[["r"]])
       model[["seof_sig"]] <- model[["seof"]] / sigma(trend_fit)
 
       if (state[["ts_vov"]] == "GARCH(1,1)") {
@@ -72,8 +80,7 @@ ts_model_mod <- function(id, state) {
       }
 
       df <- nrow(data) - sum(is.na(data[["y_t"]])) - 2 -
-        (state[["ts_autocor"]] == "ARMA(1,1)") * 2 -
-        (state[["ts_vov"]] == "GARCH(1,1)") * 3
+        ar_ord * 2 - (state[["ts_vov"]] == "GARCH(1,1)") * 3
 
       exp_if_geo <- function(x, to_be_exp = state[["ts_geomean"]]) {
         case_when(to_be_exp ~ exp(x), TRUE ~ x)
@@ -165,8 +172,13 @@ ts_model_mod <- function(id, state) {
         } else {
           trend <- "y_t ~ t"
         }
-        if (ts_autocor == "AR(1)") {
-          trend <- paste(gsub("t", "t[-1]", trend), "+ head(y_t, -1)")
+        if (substr(ts_autocor, 1, 2) == "AR") {
+          ar_ord <- as.numeric(gsub("\\D", "", ts_autocor))
+          lags <- paste0("tail(lag(y_t, ", seq_len(3), "), -", ar_ord, ")")
+          trend <- paste(
+            gsub("t", paste0("t[-seq_len(", ar_ord, ")]"), trend),
+            "+", paste(lags[seq_len(ar_ord)], collapse = " + ")
+          )
         }
         trend_fit <- lm(as.formula(trend), data, na.action = na.exclude)
         r <- residuals(trend_fit) %>% replace_na(0)
