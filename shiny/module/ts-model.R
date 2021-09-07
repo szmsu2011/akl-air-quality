@@ -37,7 +37,6 @@ ts_model_mod <- function(id, state) {
         mutate(
           t = as.numeric(t),
           y_t = case_when(
-            y_t <= 0 ~ NA_real_, ## To-be removed
             state[["ts_geomean"]] ~ log(y_t),
             TRUE ~ y_t
           )
