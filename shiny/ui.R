@@ -2,8 +2,8 @@ app_ui <- dashboardPage(
   dashboardHeader(title = "AKL Environment"),
   dashboardSidebar(sidebarMenu(
     menuItem("Air Quality", tabName = "aqi", icon = icon("dashboard")),
-    menuItem("Wind", tabName = "wind", icon = icon("wind")),
     menuItem("Weather", tabName = "weather", icon = icon("cloud-sun")),
+    menuItem("Wind", tabName = "wind", icon = icon("wind")),
     menuItem("Time Series", tabName = "tseries", icon = icon("chart-line"))
   )),
   dashboardBody(
@@ -21,6 +21,14 @@ app_ui <- dashboardPage(
           column(aqi_details_ui("aqi_details"), width = 4)
         )
       )),
+      tabItem("weather", fluidPage(
+        fluidRow(
+          column(width = 4),
+          column(selectInput("met_loc", "Site", station[["site"]]), width = 4),
+          column(airMonthpickerInput("yrmth", "Select Month"), width = 4)
+        ),
+        fluidRow(met_info_ui("met_info"))
+      )),
       tabItem("wind", fluidPage(
         fluidRow(
           column(width = 4),
@@ -34,14 +42,6 @@ app_ui <- dashboardPage(
           column(map_wind_ui("map_wind"), width = 4),
           column(wind_rose_ui("wind_rose"), width = 8)
         )
-      )),
-      tabItem("weather", fluidPage(
-        fluidRow(
-          column(width = 4),
-          column(selectInput("met_loc", "Site", station[["site"]]), width = 4),
-          column(airMonthpickerInput("yrmth", "Select Month"), width = 4)
-        ),
-        fluidRow(met_info_ui("met_info"))
       )),
       tabItem("tseries", fluidPage(
         fluidRow(
