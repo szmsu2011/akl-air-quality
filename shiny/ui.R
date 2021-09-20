@@ -32,8 +32,9 @@ app_ui <- dashboardPage(
       tabItem("wind", fluidPage(
         fluidRow(
           column(width = 4),
-          column(textOutput("wind_loc"), width = 4),
-          column(selectInput("year2", "Year", ""), width = 4),
+          column(textOutput("wind_loc"), width = 2),
+          column(selectInput("var", "Group by", c("Wind Speed", "AQI")), width = 3),
+          column(selectInput("year2", "Year", ""), width = 3),
           tags[["head"]](tags[["style"]]("#wind_loc{
             padding-top:40px;padding-left:30px;font-weight:bold;font-size:20px;
           }"))

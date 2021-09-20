@@ -36,7 +36,7 @@ wind_rose_mod <- function(id, state) {
   module <- function(input, output, session) {
     pat_wd <- "(\\(|\\[)(\\d+),(\\d+)(\\])"
 
-    e_wind_rose <- function(wind_data, yr, mth, loc) {
+    e_wind_rose <- function(wind_data, param, yr, mth, loc) {
       data <- wind_data %>%
         filter(
           location == make_clean_names(loc),
@@ -52,13 +52,14 @@ wind_rose_mod <- function(id, state) {
             between(ws, 2, 4) ~ "2-4 m/s",
             between(ws, 4, 6) ~ "4-6 m/s",
             between(ws, 6, Inf) ~ ">6 m/s"
-          ), paste(c("0-2", "2-4", "4-6", ">6"), "m/s"))
+          ), paste(c("0-2", "2-4", "4-6", ">6"), "m/s")),
+          aqi_cat = factor(aqi_cat(aqi), names(aqi_pal))
         ) %>%
         as_tibble() %>%
-        count(ws, wd, .drop = FALSE) %>%
+        count(!!sym(param), wd, .drop = FALSE) %>%
         mutate(p = round(n / sum(n) * 100, 2)) %>%
         select(-n) %>%
-        pivot_wider(names_from = ws, values_from = p, values_fill = 0)
+        pivot_wider(names_from = !!sym(param), values_from = p, values_fill = 0)
 
       if (mth == 0) data[-1] <- 11
 
@@ -71,7 +72,15 @@ wind_rose_mod <- function(id, state) {
 
       for (y in names(data)[-1]) {
         e <- e %>%
-          e_bar_(y, coord_system = "polar", stack = "stack")
+          e_bar_(y,
+            coord_system = "polar",
+            itemStyle = if (param == "aqi_cat") {
+              list(color = unname(aqi_pal[y]))
+            } else {
+              list()
+            },
+            stack = "stack"
+          )
       }
 
       e
@@ -80,9 +89,12 @@ wind_rose_mod <- function(id, state) {
     map(0:12, function(i) {
       output[["wind_rose" %>% paste0(i)]] <- renderEcharts4r({
         state[["data"]] %>%
-          select(ws, wind_dir, location) %>%
+          select(ws, aqi, wind_dir, location) %>%
           drop_na() %>%
-          e_wind_rose(state[["year"]], i, state[["map_onclick"]]) %>%
+          e_wind_rose(
+            ifelse(state[["var"]] == "AQI", "aqi_cat", "ws"),
+            state[["year"]], i, state[["map_onclick"]]
+          ) %>%
           e_legend(show = i == 0) %>%
           e_title(
             show = i != 0,
@@ -90,7 +102,7 @@ wind_rose_mod <- function(id, state) {
             padding = c(15, rep(0, 3))
           )
       }) %>%
-        bindCache(state[["year"]], state[["map_onclick"]], i)
+        bindCache(state[["var"]], state[["year"]], state[["map_onclick"]], i)
     })
   }
 

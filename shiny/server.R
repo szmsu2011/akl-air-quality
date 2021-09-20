@@ -40,6 +40,10 @@ app_server <- function(input, output, session) {
     app_state[["map_onclick"]] <- input[["ts_loc"]]
   })
 
+  observeEvent(input[["var"]], {
+    app_state[["var"]] <- input[["var"]]
+  })
+
   observeEvent(input[["ts_var"]], {
     app_state[["ts_var"]] <- input[["ts_var"]]
   })
