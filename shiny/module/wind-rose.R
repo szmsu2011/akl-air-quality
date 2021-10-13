@@ -101,8 +101,8 @@ wind_rose_mod <- function(id, state) {
             month(i + (i == 0), label = TRUE),
             padding = c(15, rep(0, 3))
           )
-      }) %>%
-        bindCache(state[["var"]], state[["year"]], state[["map_onclick"]], i)
+      }) # %>%
+        # bindCache(state[["var"]], state[["year"]], state[["map_onclick"]], i)
     })
   }
 
