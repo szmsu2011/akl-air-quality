@@ -101,7 +101,7 @@ wind_rose_mod <- function(id, state) {
             month(i + (i == 0), label = TRUE),
             padding = c(15, rep(0, 3))
           )
-      }) # %>%
+      }) # %>% ## Disabled due to a bug in purrr::map()
         # bindCache(state[["var"]], state[["year"]], state[["map_onclick"]], i)
     })
   }
