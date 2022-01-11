@@ -37,7 +37,7 @@ ts_model_mod <- function(id, state) {
         mutate(
           t = as.numeric(t),
           y_t = case_when(
-            state[["ts_geomean"]] ~ log(y_t),
+            state[["ts_geomean"]] ~ log1p(y_t),
             TRUE ~ y_t
           )
         )
@@ -83,7 +83,7 @@ ts_model_mod <- function(id, state) {
         ar_ord * 2 - (state[["ts_vov"]] == "GARCH(1,1)") * 3
 
       exp_if_geo <- function(x, to_be_exp = state[["ts_geomean"]]) {
-        case_when(to_be_exp ~ exp(x), TRUE ~ x)
+        case_when(to_be_exp ~ exp(x) - 1, TRUE ~ x)
       }
 
       label <- ifelse(
@@ -155,7 +155,7 @@ ts_model_mod <- function(id, state) {
         mutate(
           t = as.numeric(t),
           y_t = case_when(y_t <= 0 ~ NA_real_, TRUE ~ case_when(
-            ts_geomean ~ log(y_t), TRUE ~ y_t
+            ts_geomean ~ log1p(y_t), TRUE ~ y_t
           ))
         )
 
